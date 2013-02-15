@@ -1,4 +1,4 @@
-package net.hogelab.imesample;
+package net.hogelab.android.imesample;
 
 import android.preference.PreferenceActivity;
 
@@ -6,6 +6,6 @@ import android.preference.PreferenceActivity;
 //--------------------------------------------------
 // class ImeSettings
 
-public class ImeSettings extends PreferenceActivity {
+public class ImeSettingsActivity extends PreferenceActivity {
 
 }
