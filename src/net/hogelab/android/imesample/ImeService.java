@@ -1,4 +1,4 @@
-package net.hogelab.imesample;
+package net.hogelab.android.imesample;
 
 import android.annotation.SuppressLint;
 import android.inputmethodservice.InputMethodService;
