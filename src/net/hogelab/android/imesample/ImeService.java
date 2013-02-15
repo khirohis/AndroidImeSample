@@ -2,22 +2,23 @@ package net.hogelab.android.imesample;
 
 import android.annotation.SuppressLint;
 import android.inputmethodservice.InputMethodService;
-import android.inputmethodservice.KeyboardView;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
+import android.widget.TextView;
 
 
 //--------------------------------------------------
 // class ImeService
 
-public class ImeService extends InputMethodService
-	implements KeyboardView.OnKeyboardActionListener {
+public class ImeService extends InputMethodService {
 
-    private InputMethodManager mInputMethodManager;
+	private static final String TAG = ImeService.class.getSimpleName();
+
+    private InputView		mInputView;
 
 
     //--------------------------------------------------
@@ -29,9 +30,8 @@ public class ImeService extends InputMethodService
 	 */
 	@Override
 	public void onCreate() {
+		Log.v(TAG, "onCreate");
 		super.onCreate();
-
-		mInputMethodManager = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
 	}
 
 
@@ -41,6 +41,7 @@ public class ImeService extends InputMethodService
      */
     @Override
     public void onInitializeInterface() {
+		Log.v(TAG, "onInitializeInterface");
     }
 
 
@@ -52,7 +53,13 @@ public class ImeService extends InputMethodService
      */
     @Override
     public View onCreateInputView() {
-        return null;
+		Log.v(TAG, "onCreateInputView");
+
+		mInputView = (InputView)getLayoutInflater().inflate(R.layout.view_input, null);
+		TextView textInput = (TextView)mInputView.findViewById(R.id.textInput);
+		mInputView.setInputTextView(textInput);
+
+    	return mInputView;
     }
 
 
@@ -62,7 +69,9 @@ public class ImeService extends InputMethodService
      */
     @Override
     public View onCreateCandidatesView() {
-        return null;
+		Log.v(TAG, "onCreateCandidatesView");
+
+		return null;
     }
 
 
@@ -74,6 +83,7 @@ public class ImeService extends InputMethodService
      */
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
+		Log.v(TAG, "onStartInput");
         super.onStartInput(attribute, restarting);
     }
 
@@ -84,12 +94,14 @@ public class ImeService extends InputMethodService
      */
     @Override
     public void onFinishInput() {
+		Log.v(TAG, "onFinishInput");
         super.onFinishInput();
     }
 
 
     @Override
     public void onStartInputView(EditorInfo attribute, boolean restarting) {
+		Log.v(TAG, "onStartInputView");
         super.onStartInputView(attribute, restarting);
     }
 
@@ -97,6 +109,7 @@ public class ImeService extends InputMethodService
     @SuppressLint("NewApi")
 	@Override
     public void onCurrentInputMethodSubtypeChanged(InputMethodSubtype subtype) {
+		Log.v(TAG, "onCurrentInputMethodSubtypeChanged");
     }
 
 
@@ -107,6 +120,8 @@ public class ImeService extends InputMethodService
     public void onUpdateSelection(int oldSelStart, int oldSelEnd,
             int newSelStart, int newSelEnd,
             int candidatesStart, int candidatesEnd) {
+		Log.v(TAG, "onUpdateSelection");
+		Log.v(TAG, String.format("    (%d, %d, %d, %d, %d, %d)", oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd));
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
                 candidatesStart, candidatesEnd);
     }
@@ -120,6 +135,7 @@ public class ImeService extends InputMethodService
      */
     @Override
     public void onDisplayCompletions(CompletionInfo[] completions) {
+		Log.v(TAG, "onDisplayCompletions");
     }
 
 
@@ -130,31 +146,43 @@ public class ImeService extends InputMethodService
      */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_BACK:
-                // The InputMethodService already takes care of the back
-                // key for us, to dismiss the input method if it is shown.
-                // However, our keyboard could be showing a pop-up window
-                // that back should dismiss, so we first allow it to do that.
-                break;
+		Log.v(TAG, "onKeyDown");
 
-            case KeyEvent.KEYCODE_DEL:
-                // Special handling of the delete key: if we currently are
-                // composing text for the user, we want to modify that instead
-                // of let the application to the delete itself.
-                break;
+		boolean handled = false;
 
-            case KeyEvent.KEYCODE_ENTER:
-                // Let the underlying text editor always handle these.
-                return false;
+		switch (keyCode) {
 
-            default:
-                // For all other keys, if we want to do transformations on
-                // text being entered with a hard keyboard, we need to process
-                // it and do the appropriate action.
+		case KeyEvent.KEYCODE_BACK:
+            // The InputMethodService already takes care of the back
+            // key for us, to dismiss the input method if it is shown.
+            // However, our keyboard could be showing a pop-up window
+            // that back should dismiss, so we first allow it to do that.
+            break;
+
+        case KeyEvent.KEYCODE_DEL:
+            // Special handling of the delete key: if we currently are
+            // composing text for the user, we want to modify that instead
+            // of let the application to the delete itself.
+            break;
+
+        case KeyEvent.KEYCODE_ENTER:
+            // Let the underlying text editor always handle these.
+            return false;
+
+        default:
+            // For all other keys, if we want to do transformations on
+            // text being entered with a hard keyboard, we need to process
+            // it and do the appropriate action.
+        	mInputView.addInputText(String.valueOf((char)keyCode));
+        	handled = true;
+        	break;
         }
 
-        return super.onKeyDown(keyCode, event);
+		if (!handled) {
+			return super.onKeyDown(keyCode, event);
+		}
+
+		return false;
     }
 
     /**
@@ -164,6 +192,7 @@ public class ImeService extends InputMethodService
      */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+		Log.v(TAG, "onKeyUp");
         // If we want to do transformations on text being entered with a hard
         // keyboard, we need to process the up events to update the meta key
         // state we are tracking.
@@ -173,8 +202,9 @@ public class ImeService extends InputMethodService
 
 
     //--------------------------------------------------
-	// OnKeyboadActionListener implements
+	// KeyboadView.OnKeyboadActionListener implements
 
+    /*
 	@Override
 	public void onKey(int primaryCode, int[] keyCodes) {
 	}
@@ -206,4 +236,5 @@ public class ImeService extends InputMethodService
 	@Override
 	public void swipeUp() {
 	}
+	*/
 }
